@@ -8,8 +8,7 @@ while True:
         break
 
     def f(x):    
-        # Adicionei o math e sin/cos/exp no contexto para facilitar a sua digitação
-        return eval(function, {"x": x, "math": math, "sin": math.sin, "cos": math.cos, "exp": math.exp, "sqrt": math.sqrt})
+        return eval()
 
     a = float(input("Limite inferior de integração: "))
     b = float(input("Limite superior de integração: "))
