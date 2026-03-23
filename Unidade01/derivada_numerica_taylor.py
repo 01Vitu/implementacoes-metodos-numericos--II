@@ -12,32 +12,30 @@ def derivada_numerica_taylor(f, x, h, filosofia, p, n):
     filosofia : 'fw' (Forward), 'bw' (Backward), ou 'central'
     p         : Ordem da derivada (ex: 2 para derivada segunda)
     n         : Ordem do erro de truncamento (ex: 4 para erro O(h^4))
+    
+    Retorna:
+        Derivada numérica
     """
     
-    # 1. Determina a quantidade de pontos necessários para montar o sistema
-    num_pontos = p + n - 1
-    
-    # 2. Define os índices dos pontos baseado na filosofia
+    # 1/2. Determina a quantidade e os índices dos pontos baseado na filosofia
     match filosofia:
         case 'ct':
-            # Para central, queremos um número ímpar de pontos para ter simetria.
-            # Se for par, adicionamos 1.
+            num_pontos = p + n - 1
             if num_pontos % 2 == 0:
                 num_pontos += 1
-            
             m = num_pontos // 2
             pontos = np.arange(-m, m + 1)
         
         case 'fw':
-            # Pontos para frente: 0, 1, 2, ..., num_pontos - 1
+            num_pontos = p + n
             pontos = np.arange(0, num_pontos)
         
         case 'bw':
-            # Pontos para trás: 0, -1, -2, ..., -(num_pontos - 1)
+            num_pontos = p + n
             pontos = np.arange(0, -num_pontos, -1)
         
         case _:
-            raise ValueError("Filosofia inválida! Escolha 'fw', 'bw' ou 'central'.")
+            raise ValueError("Filosofia inválida! Escolha 'fw', 'bw' ou 'ct'.")
 
     # 3. Monta o sistema linear (Matriz de Vandermonde)
     A = np.zeros((num_pontos, num_pontos))

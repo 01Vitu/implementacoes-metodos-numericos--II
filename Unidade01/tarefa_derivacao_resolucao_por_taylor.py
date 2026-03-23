@@ -1,16 +1,11 @@
 import math
-import numpy as np
-from Unidade01.derivada_numerica_taylor import derivada_numerica_taylor as derivada_numerica
-from .tabela_convergencia import TabelaConvergencia
+from tarefa_derivacao_tabela_convergencia import TabelaConvergencia
+from derivada_numerica_taylor import derivada_numerica_taylor as derivada_numerica
+from unidade01_utils import criar_funcao
 
 # ==========================================
 # INTERFACE
 # ==========================================
-
-def criar_funcao(expr):
-    def f(x):
-        return eval(expr, {"__builtins__": {}}, {"x": x, "math": math, "np": np})
-    return f
 
 while True:
     try: 
@@ -26,9 +21,7 @@ while True:
 
         tabela_convergencia.print_resultados()
 
-    except ValueError as e:
-        print(f"Erro: {e}")
-    except Exception as e:
+    except (Exception) as e:
         print(f"Erro: {e}")
     finally:
         print(f"\nPressione 'Enter' para continuar ou '0' para sair ...")

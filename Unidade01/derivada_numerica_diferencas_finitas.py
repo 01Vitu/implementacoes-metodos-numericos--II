@@ -1,6 +1,6 @@
 import math
 
-def calcular_derivada(f, x, h, ordem_derivada, ordem_erro, filosofia):
+def derivada_numerica_diferencas_finitas(f, x, h, ordem_derivada, ordem_erro, filosofia):
     """
     Calcula a derivada numérica de uma função usando diferenças finitas.
     
@@ -171,41 +171,3 @@ def calcular_derivada(f, x, h, ordem_derivada, ordem_erro, filosofia):
 
     # Caso a combinação não esteja mapeada
     raise ValueError(f"Combinação não suportada: Derivada {ordem_derivada}ª, Erro O(h^{ordem_erro}), Tipo {filosofia}")
-
-# ==========================================
-# INTERFACE
-# ==========================================
-
-def criar_funcao(expr):
-    def f(x):
-        return eval(expr, {"__builtins__": {}}, {"x": x, "math": math})
-    return f
-
-while True: 
-    try: 
-        print("\nDerivada Numérica - Método de Diferenças Finitas")
-        function_expression = input("Digite a função a ser derivada: ")
-
-        f = criar_funcao(function_expression)
-
-        x_val = float(input("Ponto onde a derivada será avaliada: "))
-        h_val = float(input("Tamanho do passo (h): "))
-        ordem_derivada = int(input("Ordem da derivada: "))
-        ordem_erro = int(input("Ordem do erro: "))
-        filosofia = input("Filosofia: (FW) Forward, (BW) Backward ou (CT) Central: ").strip().lower()
-
-    except Exception as e:
-        print(f"Erro ao criar função: {e}")
-        continue
-
-    try:
-        resultado = calcular_derivada(f, x_val, h_val, ordem_derivada, ordem_erro, filosofia)
-        print(f"\nResultado da Derivada: {resultado:.8f}")
-    except ValueError as e:
-        print(f"Erro: {e}")
-        continue
-    finally:
-        print(f"\nPressione 'Enter' para continuar ou '0' para sair ...")
-   
-    if input() == '0':
-        break
