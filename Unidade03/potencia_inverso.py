@@ -1,56 +1,85 @@
-def max_abs_vetor(v):
-    return max(v, key=abs)
+import math
 
-def resolver_sistema_gauss(A_orig, b_orig):
-    n = len(A_orig)
-    A = [linha[:] for linha in A_orig]
-    b = b_orig[:]
+def produto_escalar(u, v):
+    return sum(ui * vi for ui, vi in zip(u, v))
 
-    for i in range(n):
-        pivo_max = abs(A[i][i])
-        linha_pivo = i
-        for k in range(i + 1, n):
-            if abs(A[k][i]) > pivo_max:
-                pivo_max = abs(A[k][i])
-                linha_pivo = k
-        
-        if pivo_max < 1e-12:
-            raise ValueError("Matriz singular ou mal condicionada.")
+def norma_l2(v):
+    return math.sqrt(produto_escalar(v, v))
 
-        A[i], A[linha_pivo] = A[linha_pivo], A[i]
-        b[i], b[linha_pivo] = b[linha_pivo], b[i]
-
-        for k in range(i + 1, n):
-            fator = A[k][i] / A[i][i]
-            for j in range(i, n):
-                A[k][j] -= fator * A[i][j]
-            b[k] -= fator * b[i]
-
-    y = [0.0] * n
-    for i in range(n - 1, -1, -1):
-        soma = sum(A[i][j] * y[j] for j in range(i + 1, n))
-        y[i] = (b[i] - soma) / A[i][i]
-    return y
-
-def potencia_inversa(A, tol=1e-7, max_iter=200):
-    """Encontra o autovalor de MENOR módulo."""
+def decomp_lu(A):
     n = len(A)
-    x = [1.0] * n
-    mu_old = 0.0
+    L = [[0.0] * n for _ in range(n)]
+    U = [[0.0] * n for _ in range(n)]
+    
+    for i in range(n):
+        L[i][i] = 1.0
+        
+        for j in range(i, n):
+            U[i][j] = A[i][j] - sum(L[i][k] * U[k][j] for k in range(i))
+            
+        for j in range(i + 1, n):
+            if abs(U[i][i]) < 1e-12:
+                raise ValueError("Pivô nulo ou muito próximo de zero na decomposição LU.")
+            L[j][i] = (A[j][i] - sum(L[j][k] * U[k][i] for k in range(i))) / U[i][i]
+            
+    return L, U
+
+def resolver_lu(L, U, b):
+    n = len(L)
+    # L y = b (substituição direta)
+    y = [0.0] * n
+    for i in range(n):
+        y[i] = b[i] - sum(L[i][j] * y[j] for j in range(i))
+        
+    # U x = y (retrosubstituição)
+    x = [0.0] * n
+    for i in range(n - 1, -1, -1):
+        if abs(U[i][i]) < 1e-12:
+            raise ValueError("Divisão por zero na retrosubstituição LU.")
+        x[i] = (y[i] - sum(U[i][j] * x[j] for j in range(i + 1, n))) / U[i][i]
+        
+    return x
+
+def potencia_inversa(A, v0=None, tol=1e-7, max_iter=200):
+    """Encontra o autovalor de menor módulo de A seguindo o Algoritmo 2.1b."""
+    n = len(A)
+    try:
+        L, U = decomp_lu(A)
+    except ValueError:
+        return None, None, 0
+
+    # Step 1 e 4: vetor inicial v0 (padrão de 1s se for None)
+    v_novo = [1.0] * n if v0 is None else list(v0)
+    lambda_bar_novo = 0.0  # Step 3
 
     for iteracao in range(1, max_iter + 1):
+        lambda_bar_velho = lambda_bar_novo  # Step 5
+        v_velho = v_novo                    # Step 6
+
+        # Step 7: Normalizar L2
+        norma = norma_l2(v_velho)
+        if norma < 1e-12:
+            return None, v_velho, iteracao
+        x_velho = [elem / norma for elem in v_velho]
+
+        # Step 8: Resolver LU
         try:
-            y = resolver_sistema_gauss(A, x)
+            v_novo = resolver_lu(L, U, x_velho)
         except ValueError:
-            return None, None, iteracao
+            return None, x_velho, iteracao
 
-        mu_new = max_abs_vetor(y)
-        x = [elem / mu_new for elem in y]
+        # Step 9: Estimativa do autovalor da inversa (Rayleigh)
+        lambda_bar_novo = produto_escalar(x_velho, v_novo)
 
-        if abs(mu_new - mu_old) / abs(mu_new) < tol:
-            lambda_real = 1.0 / mu_new
-            return lambda_real, x, iteracao
-        
-        mu_old = mu_new
+        # Step 10: Verificar convergência relativa
+        if abs(lambda_bar_novo) > 1e-12:
+            erro = abs((lambda_bar_novo - lambda_bar_velho) / lambda_bar_novo)
+        else:
+            erro = abs(lambda_bar_novo - lambda_bar_velho)
 
-    return 1.0 / mu_new, x, max_iter
+        if erro < tol:
+            lambda_real = 1.0 / lambda_bar_novo  # Step 11
+            return lambda_real, x_velho, iteracao  # Step 12 e 13
+
+    lambda_real = 1.0 / lambda_bar_novo
+    return lambda_real, x_velho, max_iter

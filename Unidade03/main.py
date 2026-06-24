@@ -137,7 +137,11 @@ def main():
             try:
                 alvo = float(input("\nDigite o valor alvo de busca (deslocamento): ").replace(",", "."))
                 val, vec, it = potencia_deslocada(A, alvo)
-                print(f"\n[Resultado] Autovalor mais próximo de {alvo}: {val:.6f} (em {it} iterações)")
+                if val is not None:
+                    print(f"\n[Resultado] Autovalor mais próximo de {alvo}: {val:.6f} (em {it} iterações)")
+                    print(f"Autovetor associado: {[round(v, 4) for v in vec]}")
+                else:
+                    print("\n[Erro] Não foi possível convergir (a matriz transladada pode ser singular).")
             except ValueError:
                 print("\n[Erro] Número inválido.")
             pausa()
@@ -148,15 +152,20 @@ def main():
                 if input("Deseja forçar o cálculo mesmo assim? (S/N): ").strip().upper() != "S":
                     continue
             print("\nTransformando em Tridiagonal (Householder)...")
-            T = householder_tridiagonal(A)
+            T, H = householder_tridiagonal(A)
+            print("\nMatriz Tridiagonal T:")
             imprimir_matriz(T)
+            print("\nMatriz Acumulada H:")
+            imprimir_matriz(H)
             pausa()
 
         elif op == "5":
-            print("\nRodando Algoritmo QR Bruto (pode demorar em matrizes grandes)...")
-            vals, it = algoritmo_qr(A)
+            print("\nRodando Algoritmo QR via Rotações de Givens...")
+            P_qr, vals, it = algoritmo_qr(A)
             print(f"\nAutovalores encontrados ({it} iterações):")
             print("  [" + ", ".join(f"{v:.4f}" for v in vals) + "]")
+            print("\nAutovetores (colunas da matriz P acumulada):")
+            imprimir_matriz(P_qr)
             pausa()
 
         elif op == "6":
@@ -167,15 +176,20 @@ def main():
                 
             print("\n" + "."*50)
             print(" >> [Passo 1] Aplicando Reflexões de Householder...")
-            T = householder_tridiagonal(A)
+            T, H = householder_tridiagonal(A)
             
             print(" >> [Passo 2] Injetando Tridiagonal no Algoritmo QR...")
-            vals, it = algoritmo_qr(T)
+            P_qr, vals, it = algoritmo_qr(T)
             
             print("."*50)
             print(f"\n ESTABILIDADE ATINGIDA EM APENAS {it} ITERAÇÕES.")
             print("\n ESPECTRO COMPLETO DE AUTOVALORES:")
             print("   " + "  |  ".join(f"λ = {v:.5f}" for v in vals))
+            print("\n AUTOVETORES DA TRIDIAGONAL (colunas de P_qr):")
+            imprimir_matriz(P_qr)
+            print("\n AUTOVETORES DE A (colunas de H*P_qr):")
+            HP = [[sum(H[i][k] * P_qr[k][j] for k in range(len(H))) for j in range(len(P_qr[0]))] for i in range(len(H))]
+            imprimir_matriz(HP)
             pausa()
 
         elif op == "M":
